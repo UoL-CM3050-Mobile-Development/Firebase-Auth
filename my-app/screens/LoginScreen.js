@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+
 import {
   KeyboardAvoidingView,
   StyleSheet,
@@ -6,11 +8,66 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useState } from 'react';
 
-const LoginScreen = () => {
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+} from 'firebase/auth';
+
+import { auth } from '../firebase';
+
+const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+        // ...
+        navigation.replace('Home');
+      } else {
+        // User is signed out
+      }
+    });
+  }, []);
+
+  const handleSignup = () => {
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        console.log(`Registered with ${user.email}`);
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        alert(errorMessage);
+      })
+      .finally(() => {
+        setEmail('');
+        setPassword('');
+      });
+  };
+
+  const handleLogin = () => {
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        // ...
+        console.log(`Logged in with ${user.email}`);
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        alert(errorMessage);
+      })
+      .finally(() => {
+        setEmail('');
+        setPassword('');
+      });
+  };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
@@ -18,23 +75,23 @@ const LoginScreen = () => {
         <TextInput
           placeholder="Email"
           value={email}
-          onChange={(text) => setEmail(text)}
+          onChangeText={(value) => setEmail(value)}
           style={styles.input}
         />
         <TextInput
           placeholder="Password"
           value={password}
-          onChange={(text) => setPassword(text)}
+          onChangeText={(value) => setPassword(value)}
           style={styles.input}
           secureTextEntry
         />
       </View>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={() => {}} style={styles.button}>
+        <TouchableOpacity onPress={handleLogin} style={styles.button}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={handleSignup}
           style={[styles.button, styles.buttonOutline]}
         >
           <Text style={styles.buttonOutlineText}>Register</Text>
